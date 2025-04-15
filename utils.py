@@ -17,34 +17,44 @@ def save_data(df):
     df.reset_index(drop=True, inplace=True)
     df.to_csv(DATA_FILE, index=False)
 
+from datetime import datetime, timedelta
+
 def calculate_hours(start, end, pause_min):
     """
     Calcule la durée en heures entre deux objets datetime.time,
-    en déduisant la pause en minutes.
+    en déduisant la pause en minutes, sans tenir compte des secondes.
     """
+    # Si les arguments 'start' et 'end' sont des chaînes de caractères (format "HH:MM"),
+    # on les convertit en objets datetime.time sans secondes
     if isinstance(start, str):
-        start = datetime.strptime(start, "%H:%M:%S").time()
+        start = datetime.strptime(start, "%H:%M").time()
     if isinstance(end, str):
-        end = datetime.strptime(end, "%H:%M:%S").time()
+        end = datetime.strptime(end, "%H:%M").time()
 
-    # Si 'start' et 'end' sont déjà des objets datetime.time, on n'effectue pas la conversion à nouveau
+    # Si 'start' et 'end' sont déjà des objets datetime.time, on les transforme en datetime
     if isinstance(start, datetime.time):
         dt_start = datetime.combine(datetime.today(), start)
     else:
-        dt_start = datetime.strptime(str(start), "%H:%M:%S")
+        dt_start = datetime.strptime(str(start), "%H:%M")
 
     if isinstance(end, datetime.time):
         dt_end = datetime.combine(datetime.today(), end)
     else:
-        dt_end = datetime.strptime(str(end), "%H:%M:%S")
+        dt_end = datetime.strptime(str(end), "%H:%M")
 
     # Si l'heure de fin est avant l'heure de début (exemple : garde de nuit), on ajoute un jour à l'heure de fin
     if dt_end < dt_start:
         dt_end += timedelta(days=1)
 
+    # Calcul de la durée en prenant en compte la pause
     duration = dt_end - dt_start - timedelta(minutes=pause_min)
+    
+    # Conversion de la durée en heures (avec un format arrondi à 2 décimales)
     hours = round(duration.total_seconds() / 3600, 2)
+
+    # Retourne 0 si la durée est négative (pour éviter des résultats incorrects)
     return max(hours, 0)
+
 
 def export_pdf(df, mois):
     """
