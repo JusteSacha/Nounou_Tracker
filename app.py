@@ -14,33 +14,25 @@ st.title("👶 Nounou Tracker - Suivi des Heures de Garde")
 data = load_data()
 
 # Boutons : Déposer et Récupérer bébé
-st.header("🚼 Enregistrement rapide")
+st.header("💼 Gestion des heures de dépose et de récupération")
 
 col1, col2 = st.columns(2)
-
 with col1:
-    if st.button("🟢 Je dépose bébé"):
-        now = datetime.now(tz)
-        new_id = int(data["ID"].max()) + 1 if not data.empty else 1
-        new_row = pd.DataFrame([[new_id, now.date(), now.time(), None, 0, None]],
-                               columns=["ID", "Date", "Heure Début", "Heure Fin", "Pause (min)", "Durée (h)"])
-        data = pd.concat([data, new_row], ignore_index=True)
-        save_data(data)
-        st.success(f"Bébé déposé à {now.strftime('%H:%M')}")
+    id_depose = st.number_input("ID Créneau Dépose", min_value=1, step=1)
+    date_depose = st.date_input("📅 Date de dépose", value=datetime.today())
+    heure_depose = st.time_input("🕒 Heure de dépose")
+    if st.button("Je dépose bébé"):
+        ajouter_depose(data, id_depose, date_depose, heure_depose)
+        st.success("✅ Heure de dépose ajoutée.")
 
 with col2:
-    if st.button("🔴 Je récupère bébé"):
-        now = datetime.now(tz)
-        last_entry = data[data["Heure Fin"].isnull()].sort_values("Date").tail(1)
-        if not last_entry.empty:
-            idx = last_entry.index[0]
-            heure_debut = pd.to_datetime(str(data.loc[idx, "Heure Début"]))
-            heure_fin = now.time()
-            duree = calculate_hours(heure_debut.time(), heure_fin, int(data.loc[idx, "Pause (min)"]))
-            data.at[idx, "Heure Fin"] = heure_fin
-            data.at[idx, "Durée (h)"] = duree
-            save_data(data)
-            st.success(f"Bébé récupéré à {now.strftime('%H:%M')} – {duree} h enregistrées.")
+    id_recup = st.number_input("ID Créneau Récupération", min_value=1, step=1)
+    date_recup = st.date_input("📅 Date de récupération", value=datetime.today())
+    heure_recup = st.time_input("🕔 Heure de récupération")
+    if st.button("Je récupère bébé"):
+        ajouter_recuperation(data, id_recup, date_recup, heure_recup)
+        st.success("✅ Heure de récupération ajoutée.")
+
         else:
             st.warning("Aucune entrée sans heure de fin trouvée.")
 
