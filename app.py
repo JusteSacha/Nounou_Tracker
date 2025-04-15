@@ -9,6 +9,35 @@ st.title("👶 Nounou Tracker - Suivi des Heures de Garde")
 # Chargement des données
 data = load_data()
 
+# Boutons rapides
+st.header("🚼 Dépôt / Récupération express")
+
+if st.button("🟢 Je dépose bébé"):
+    now = datetime.now()
+    new_id = int(data["ID"].max()) + 1 if not data.empty else 1
+    new_row = pd.DataFrame([[new_id, now.date(), now.time(), pd.NaT, 0, 0]],
+                           columns=["ID", "Date", "Heure Début", "Heure Fin", "Pause (min)", "Durée (h)"])
+    data = pd.concat([data, new_row], ignore_index=True)
+    save_data(data)
+    st.success(f"✅ Déposé à {now.strftime('%H:%M')} le {now.strftime('%d/%m/%Y')}")
+
+if st.button("🔴 Je récupère bébé"):
+    ongoing = data[data["Heure Fin"].isna()]
+    if not ongoing.empty:
+        idx = ongoing.index[-1]  # dernière ligne sans "Heure Fin"
+        now = datetime.now()
+        data.at[idx, "Heure Fin"] = now.time()
+        # Recalcul de la durée
+        heure_debut = pd.to_datetime(str(data.at[idx, "Date"]) + ' ' + str(data.at[idx, "Heure Début"]))
+        heure_fin = pd.to_datetime(str(data.at[idx, "Date"]) + ' ' + str(now.time()))
+        duree = (heure_fin - heure_debut).total_seconds() / 3600
+        data.at[idx, "Durée (h)"] = round(duree, 2)
+        save_data(data)
+        st.success(f"✅ Bébé récupéré à {now.strftime('%H:%M')}. Durée : {round(duree,2)} h")
+    else:
+        st.warning("⚠️ Aucun dépôt en attente de récupération.")
+
+
 # Formulaire d'entrée
 st.header("📝 Ajouter une journée de garde")
 with st.form("entry_form"):
