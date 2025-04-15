@@ -44,30 +44,38 @@ with col2:
         else:
             st.warning("Aucune entrée sans heure de fin trouvée.")
 
+
 # Formulaire classique d'entrée
 st.header("📝 Ajouter une journée de garde")
 with st.form("entry_form"):
     date = st.date_input("📅 Date", value=datetime.now(tz).date())
     
-    # Heure de début : limité entre 7h et 18h
-    heure_debut = st.time_input("🕒 Heure de début", min_value=datetime.strptime("07:00", "%H:%M").time(), 
-                                max_value=datetime.strptime("18:00", "%H:%M").time())
-    
-    # Heure de fin : limité entre 7h et 18h
-    heure_fin = st.time_input("🕔 Heure de fin", min_value=datetime.strptime("07:00", "%H:%M").time(), 
-                              max_value=datetime.strptime("18:00", "%H:%M").time())
-    
+    # Heure de début : Restriction entre 7h et 18h
+    heure_debut = st.time_input("🕒 Heure de début", value=datetime.strptime("07:00", "%H:%M").time())
+    if heure_debut < datetime.strptime("07:00", "%H:%M").time():
+        heure_debut = datetime.strptime("07:00", "%H:%M").time()
+    elif heure_debut > datetime.strptime("18:00", "%H:%M").time():
+        heure_debut = datetime.strptime("18:00", "%H:%M").time()
+
+    # Heure de fin : Restriction entre 7h et 18h
+    heure_fin = st.time_input("🕔 Heure de fin", value=datetime.strptime("07:00", "%H:%M").time())
+    if heure_fin < datetime.strptime("07:00", "%H:%M").time():
+        heure_fin = datetime.strptime("07:00", "%H:%M").time()
+    elif heure_fin > datetime.strptime("18:00", "%H:%M").time():
+        heure_fin = datetime.strptime("18:00", "%H:%M").time()
+
     pause_minutes = st.number_input("⏸️ Pause (minutes)", min_value=0, value=0, step=5)
     submitted = st.form_submit_button("Ajouter")
 
     if submitted:
         total_heures = calculate_hours(heure_debut, heure_fin, pause_minutes)
         new_id = int(data["ID"].max()) + 1 if not data.empty else 1
-        new_row = pd.DataFrame([[new_id, date, heure_debut, heure_fin, pause_minutes, total_heures]], 
+        new_row = pd.DataFrame([[new_id, date, heure_debut, heure_fin, pause_minutes, total_heures]],
                                columns=["ID", "Date", "Heure Début", "Heure Fin", "Pause (min)", "Durée (h)"])
         data = pd.concat([data, new_row], ignore_index=True)
         save_data(data)
         st.success("✅ Journée ajoutée !")
+
 
 # Affichage synthèse
 st.header("📊 Synthèse des heures")
