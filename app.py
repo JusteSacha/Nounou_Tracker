@@ -48,15 +48,22 @@ with col2:
 st.header("📝 Ajouter une journée de garde")
 with st.form("entry_form"):
     date = st.date_input("📅 Date", value=datetime.now(tz).date())
-    heure_debut = st.time_input("🕒 Heure de début")
-    heure_fin = st.time_input("🕔 Heure de fin")
+    
+    # Heure de début : limité entre 7h et 18h
+    heure_debut = st.time_input("🕒 Heure de début", min_value=datetime.strptime("07:00", "%H:%M").time(), 
+                                max_value=datetime.strptime("18:00", "%H:%M").time())
+    
+    # Heure de fin : limité entre 7h et 18h
+    heure_fin = st.time_input("🕔 Heure de fin", min_value=datetime.strptime("07:00", "%H:%M").time(), 
+                              max_value=datetime.strptime("18:00", "%H:%M").time())
+    
     pause_minutes = st.number_input("⏸️ Pause (minutes)", min_value=0, value=0, step=5)
     submitted = st.form_submit_button("Ajouter")
 
     if submitted:
         total_heures = calculate_hours(heure_debut, heure_fin, pause_minutes)
         new_id = int(data["ID"].max()) + 1 if not data.empty else 1
-        new_row = pd.DataFrame([[new_id, date, heure_debut, heure_fin, pause_minutes, total_heures]],
+        new_row = pd.DataFrame([[new_id, date, heure_debut, heure_fin, pause_minutes, total_heures]], 
                                columns=["ID", "Date", "Heure Début", "Heure Fin", "Pause (min)", "Durée (h)"])
         data = pd.concat([data, new_row], ignore_index=True)
         save_data(data)
