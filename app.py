@@ -4,7 +4,6 @@ from datetime import datetime
 import pytz
 from utils import load_data, save_data, calculate_hours, export_pdf
 
-# Fuseau horaire
 tz = pytz.timezone("Europe/Paris")
 
 st.set_page_config(page_title="Suivi Garde Enfant", layout="centered")
@@ -44,26 +43,12 @@ with col2:
         else:
             st.warning("Aucune entrée sans heure de fin trouvée.")
 
-
 # Formulaire classique d'entrée
 st.header("📝 Ajouter une journée de garde")
 with st.form("entry_form"):
     date = st.date_input("📅 Date", value=datetime.now(tz).date())
-    
-    # Heure de début
     heure_debut = st.time_input("🕒 Heure de début", value=datetime.strptime("09:00", "%H:%M").time())
-    if heure_debut < datetime.strptime("07:00", "%H:%M").time():
-        heure_debut = datetime.strptime("07:00", "%H:%M").time()
-    elif heure_debut > datetime.strptime("18:00", "%H:%M").time():
-        heure_debut = datetime.strptime("18:00", "%H:%M").time()
-
-    # Heure de fin
     heure_fin = st.time_input("🕔 Heure de fin", value=datetime.strptime("16:00", "%H:%M").time())
-    if heure_fin < datetime.strptime("07:00", "%H:%M").time():
-        heure_fin = datetime.strptime("07:00", "%H:%M").time()
-    elif heure_fin > datetime.strptime("18:00", "%H:%M").time():
-        heure_fin = datetime.strptime("18:00", "%H:%M").time()
-
     pause_minutes = st.number_input("⏸️ Pause (minutes)", min_value=0, value=0, step=5)
     submitted = st.form_submit_button("Ajouter")
 
@@ -76,8 +61,7 @@ with st.form("entry_form"):
         save_data(data)
         st.success("✅ Journée ajoutée !")
 
-
-# Affichage synthèse
+# Synthèse
 st.header("📊 Synthèse des heures")
 if not data.empty:
     data["Date"] = pd.to_datetime(data["Date"])
@@ -87,22 +71,17 @@ if not data.empty:
     df_mois = data[data["Date"].dt.strftime('%Y-%m') == mois_selectionne]
     total_mois = round(df_mois["Durée (h)"].sum(), 2)
 
-    # Formater les heures (Heure Début, Heure Fin) pour ne pas afficher les secondes
-    df_mois["Heure Début"] = df_mois["Heure Début"].apply(lambda x: x.strftime("%H:%M") if pd.notnull(x) else "")
-    df_mois["Heure Fin"] = df_mois["Heure Fin"].apply(lambda x: x.strftime("%H:%M") if pd.notnull(x) else "")
-
     st.subheader(f"🗓️ Mois : {mois_selectionne}")
     st.write(f"**Total d'heures de garde :** ⏱️ {total_mois} heures")
     st.dataframe(df_mois)
 
-    # 🗑️ Suppression
+    # Suppression
     st.subheader("🗑️ Supprimer un créneau")
     if not df_mois.empty and "ID" in df_mois.columns:
         ligne_a_supprimer = st.selectbox(
             "Sélectionner un créneau à supprimer",
             df_mois.apply(lambda row: f"{int(row['ID'])} | {row['Date'].strftime('%Y-%m-%d')}", axis=1)
         )
-
         if st.button("Supprimer ce créneau"):
             id_selection = int(ligne_a_supprimer.split(" | ")[0])
             data = data[data["ID"] != id_selection]
@@ -111,7 +90,7 @@ if not data.empty:
     else:
         st.info("Aucun créneau à supprimer ce mois-ci.")
 
-    # 📤 Export PDF
+    # Export PDF
     if st.button("📤 Exporter la synthèse en PDF"):
         pdf_path = export_pdf(df_mois, mois_selectionne)
         st.success("✅ PDF généré avec succès")
