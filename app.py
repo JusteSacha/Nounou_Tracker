@@ -91,11 +91,14 @@ if not data.empty:
     df_mois["Heure Début"] = df_mois["Heure Début"].apply(lambda x: x.strftime("%H:%M") if pd.notnull(x) else "")
     df_mois["Heure Fin"] = df_mois["Heure Fin"].apply(lambda x: x.strftime("%H:%M") if pd.notnull(x) else "")
 
+    # ✅ Formater la date pour enlever l'heure
+    df_mois["Date"] = df_mois["Date"].dt.strftime("%Y-%m-%d")
+
     st.subheader(f"🗓️ Mois : {mois_selectionne}")
     st.write(f"**Total d'heures de garde :** ⏱️ {total_mois} heures")
     st.dataframe(df_mois)
 
-    # 🗑️ Suppression
+# 🗑️ Suppression
     st.subheader("🗑️ Supprimer un créneau")
     if not df_mois.empty and "ID" in df_mois.columns:
         ligne_a_supprimer = st.selectbox(
