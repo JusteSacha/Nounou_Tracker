@@ -50,15 +50,15 @@ st.header("📝 Ajouter une journée de garde")
 with st.form("entry_form"):
     date = st.date_input("📅 Date", value=datetime.now(tz).date())
     
-    # Heure de début : Restriction entre 7h et 18h
-    heure_debut = st.time_input("🕒 Heure de début", value=datetime.strptime("07:00", "%H:%M").time())
+    # Heure de début
+    heure_debut = st.time_input("🕒 Heure de début", value=datetime.strptime("09:00", "%H:%M").time())
     if heure_debut < datetime.strptime("07:00", "%H:%M").time():
         heure_debut = datetime.strptime("07:00", "%H:%M").time()
     elif heure_debut > datetime.strptime("18:00", "%H:%M").time():
         heure_debut = datetime.strptime("18:00", "%H:%M").time()
 
-    # Heure de fin : Restriction entre 7h et 18h
-    heure_fin = st.time_input("🕔 Heure de fin", value=datetime.strptime("07:00", "%H:%M").time())
+    # Heure de fin
+    heure_fin = st.time_input("🕔 Heure de fin", value=datetime.strptime("16:00", "%H:%M").time())
     if heure_fin < datetime.strptime("07:00", "%H:%M").time():
         heure_fin = datetime.strptime("07:00", "%H:%M").time()
     elif heure_fin > datetime.strptime("18:00", "%H:%M").time():
