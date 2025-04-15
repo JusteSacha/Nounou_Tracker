@@ -78,37 +78,25 @@ with st.form("entry_form"):
 
 
 # Affichage synthèse
-# Affichage synthèse
 st.header("📊 Synthèse des heures")
-
 if not data.empty:
-    # S'assurer que Date est bien au format datetime.date (pas datetime complet)
-    data["Date"] = pd.to_datetime(data["Date"], errors='coerce').dt.date
-
-    # Trier les données par date
+    data["Date"] = pd.to_datetime(data["Date"])
     data = data.sort_values("Date")
 
-    # Extraire tous les mois uniques sous forme "YYYY-MM"
-    mois_uniques = sorted({d.strftime('%Y-%m') for d in data["Date"]}, reverse=True)
-    mois_selectionne = st.selectbox("📆 Choisir un mois", mois_uniques)
-
-    # Filtrer le DataFrame pour le mois sélectionné
-    df_mois = data[[d.strftime('%Y-%m') == mois_selectionne for d in data["Date"]]].copy()
-
-    # Formater les heures pour afficher HH:MM sans les secondes
-    df_mois["Heure Début"] = pd.to_datetime(df_mois["Heure Début"].astype(str), format="%H:%M:%S", errors="coerce").dt.strftime("%H:%M")
-    df_mois["Heure Fin"] = pd.to_datetime(df_mois["Heure Fin"].astype(str), format="%H:%M:%S", errors="coerce").dt.strftime("%H:%M")
-
-    # Formater la date en JJ/MM/AAAA pour affichage
-    df_mois["Date"] = df_mois["Date"].apply(lambda d: d.strftime("%d/%m/%Y") if pd.notnull(d) else "")
-
-    # Calcul total
+    mois_selectionne = st.selectbox("📆 Choisir un mois", sorted(data["Date"].dt.strftime('%Y-%m').unique(), reverse=True))
+    df_mois = data[data["Date"].dt.strftime('%Y-%m') == mois_selectionne]
     total_mois = round(df_mois["Durée (h)"].sum(), 2)
+
+    # Formater les heures (Heure Début, Heure Fin) pour ne pas afficher les secondes
+    df_mois["Heure Début"] = df_mois["Heure Début"].apply(lambda x: x.strftime("%H:%M") if pd.notnull(x) else "")
+    df_mois["Heure Fin"] = df_mois["Heure Fin"].apply(lambda x: x.strftime("%H:%M") if pd.notnull(x) else "")
+
+    # ✅ Formater la date pour enlever l'heure
+    df_mois["Date"] = df_mois["Date"].dt.strftime("%Y-%m-%d")
 
     st.subheader(f"🗓️ Mois : {mois_selectionne}")
     st.write(f"**Total d'heures de garde :** ⏱️ {total_mois} heures")
     st.dataframe(df_mois)
-
 
 # 🗑️ Suppression
     st.subheader("🗑️ Supprimer un créneau")
