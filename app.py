@@ -78,24 +78,37 @@ with st.form("entry_form"):
 
 
 # Affichage synthèse
+# Affichage synthèse
 st.header("📊 Synthèse des heures")
+
 if not data.empty:
-    data["Date"] = pd.to_datetime(data["Date"])
+    # Assurer que la colonne Date est bien en datetime et ne contient pas d'heure
+    data["Date"] = pd.to_datetime(data["Date"]).dt.date
+
+    # Trier par date
     data = data.sort_values("Date")
 
-    mois_selectionne = st.selectbox("📆 Choisir un mois", sorted(data["Date"].dt.strftime('%Y-%m').unique(), reverse=True))
-    df_mois = data[data["Date"].dt.strftime('%Y-%m') == mois_selectionne]
+    # Sélection du mois
+    mois_selectionne = st.selectbox(
+        "📆 Choisir un mois",
+        sorted(data["Date"], reverse=True),
+        format_func=lambda x: x.strftime("%Y-%m")
+    )
+
+    # Filtrer les données du mois sélectionné
+    df_mois = data[data["Date"].apply(lambda d: d.strftime("%Y-%m")) == mois_selectionne.strftime("%Y-%m")]
     total_mois = round(df_mois["Durée (h)"].sum(), 2)
 
-    # Formater les heures (Heure Début, Heure Fin) pour ne pas afficher les secondes
-    df_mois["Heure Début"] = df_mois["Heure Début"].apply(lambda x: x.strftime("%H:%M") if pd.notnull(x) else "")
-    df_mois["Heure Fin"] = df_mois["Heure Fin"].apply(lambda x: x.strftime("%H:%M") if pd.notnull(x) else "")
+    # Nettoyage des heures pour ne pas afficher les secondes
+    df_mois["Heure Début"] = pd.to_datetime(df_mois["Heure Début"].astype(str), format="%H:%M:%S", errors='coerce').dt.strftime("%H:%M")
+    df_mois["Heure Fin"] = pd.to_datetime(df_mois["Heure Fin"].astype(str), format="%H:%M:%S", errors='coerce').dt.strftime("%H:%M")
 
-    # ✅ Formater la date pour enlever l'heure
-    df_mois["Date"] = df_mois["Date"].dt.strftime("%Y-%m-%d")
+    # Reformater la date si besoin
+    df_mois["Date"] = pd.to_datetime(df_mois["Date"]).dt.strftime("%d/%m/%Y")
 
-    st.subheader(f"🗓️ Mois : {mois_selectionne}")
+    st.subheader(f"🗓️ Mois : {mois_selectionne.strftime('%B %Y')}")
     st.write(f"**Total d'heures de garde :** ⏱️ {total_mois} heures")
+
     st.dataframe(df_mois)
 
 # 🗑️ Suppression
