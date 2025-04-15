@@ -33,9 +33,6 @@ with col2:
         ajouter_recuperation(data, id_recup, date_recup, heure_recup)
         st.success("✅ Heure de récupération ajoutée.")
 
-        else:
-            st.warning("Aucune entrée sans heure de fin trouvée.")
-
 # Formulaire classique d'entrée
 st.header("📝 Ajouter une journée de garde")
 with st.form("entry_form"):
