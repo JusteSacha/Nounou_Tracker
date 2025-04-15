@@ -40,6 +40,16 @@ if not data.empty:
 
     st.dataframe(df_mois)
 
+    # 🗑️ Suppression
+st.subheader("🗑️ Supprimer un créneau")
+ligne_a_supprimer = st.selectbox("Sélectionner un créneau à supprimer", df_mois["ID"].astype(str) + " | " + df_mois["Date"].astype(str))
+
+if st.button("Supprimer ce créneau"):
+    id_selection = int(ligne_a_supprimer.split(" | ")[0])
+    data = data[data["ID"] != id_selection]
+    save_data(data)
+    st.success("✅ Créneau supprimé avec succès. Recharge l'app pour voir les changements.")
+
     # Export PDF
     if st.button("📤 Exporter la synthèse en PDF"):
         pdf_path = export_pdf(df_mois, mois_selectionne)
