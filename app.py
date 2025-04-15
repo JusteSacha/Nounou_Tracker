@@ -74,6 +74,10 @@ if not data.empty:
 
     st.subheader(f"🗓️ Mois : {mois_selectionne}")
     st.write(f"**Total d'heures de garde :** ⏱️ {total_mois} heures")
+
+    # Formater les durées sans les secondes
+    df_mois["Durée (h)"] = df_mois["Durée (h)"].apply(lambda x: f"{x:.2f}" if x is not None else "-")
+
     st.dataframe(df_mois)
 
     # 🗑️ Suppression
