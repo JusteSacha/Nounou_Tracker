@@ -13,7 +13,7 @@ st.title("👶 Nounou Tracker - Suivi des Heures de Garde")
 # Chargement des données
 data = load_data()
 
-# Boutons : Déposer et Récupérer bébé
+# Boutons : Dépôt et récup bébé
 st.header("🚼 Enregistrement rapide")
 
 col1, col2 = st.columns(2)
