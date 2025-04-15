@@ -82,34 +82,33 @@ with st.form("entry_form"):
 st.header("📊 Synthèse des heures")
 
 if not data.empty:
-    # Assurer que la colonne Date est bien en datetime et ne contient pas d'heure
-    data["Date"] = pd.to_datetime(data["Date"]).dt.date
+    # S'assurer que Date est bien au format datetime.date (pas datetime complet)
+    data["Date"] = pd.to_datetime(data["Date"], errors='coerce').dt.date
 
-    # Trier par date
+    # Trier les données par date
     data = data.sort_values("Date")
 
-    # Sélection du mois
-    mois_selectionne = st.selectbox(
-        "📆 Choisir un mois",
-        sorted(data["Date"], reverse=True),
-        format_func=lambda x: x.strftime("%Y-%m")
-    )
+    # Extraire tous les mois uniques sous forme "YYYY-MM"
+    mois_uniques = sorted({d.strftime('%Y-%m') for d in data["Date"]}, reverse=True)
+    mois_selectionne = st.selectbox("📆 Choisir un mois", mois_uniques)
 
-    # Filtrer les données du mois sélectionné
-    df_mois = data[data["Date"].apply(lambda d: d.strftime("%Y-%m")) == mois_selectionne.strftime("%Y-%m")]
+    # Filtrer le DataFrame pour le mois sélectionné
+    df_mois = data[[d.strftime('%Y-%m') == mois_selectionne for d in data["Date"]]].copy()
+
+    # Formater les heures pour afficher HH:MM sans les secondes
+    df_mois["Heure Début"] = pd.to_datetime(df_mois["Heure Début"].astype(str), format="%H:%M:%S", errors="coerce").dt.strftime("%H:%M")
+    df_mois["Heure Fin"] = pd.to_datetime(df_mois["Heure Fin"].astype(str), format="%H:%M:%S", errors="coerce").dt.strftime("%H:%M")
+
+    # Formater la date en JJ/MM/AAAA pour affichage
+    df_mois["Date"] = df_mois["Date"].apply(lambda d: d.strftime("%d/%m/%Y") if pd.notnull(d) else "")
+
+    # Calcul total
     total_mois = round(df_mois["Durée (h)"].sum(), 2)
 
-    # Nettoyage des heures pour ne pas afficher les secondes
-    df_mois["Heure Début"] = pd.to_datetime(df_mois["Heure Début"].astype(str), format="%H:%M:%S", errors='coerce').dt.strftime("%H:%M")
-    df_mois["Heure Fin"] = pd.to_datetime(df_mois["Heure Fin"].astype(str), format="%H:%M:%S", errors='coerce').dt.strftime("%H:%M")
-
-    # Reformater la date si besoin
-    df_mois["Date"] = pd.to_datetime(df_mois["Date"]).dt.strftime("%d/%m/%Y")
-
-    st.subheader(f"🗓️ Mois : {mois_selectionne.strftime('%B %Y')}")
+    st.subheader(f"🗓️ Mois : {mois_selectionne}")
     st.write(f"**Total d'heures de garde :** ⏱️ {total_mois} heures")
-
     st.dataframe(df_mois)
+
 
 # 🗑️ Suppression
     st.subheader("🗑️ Supprimer un créneau")
