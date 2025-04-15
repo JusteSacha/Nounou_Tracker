@@ -84,27 +84,25 @@ if not data.empty:
     data = data.sort_values("Date")
 
     mois_selectionne = st.selectbox("📆 Choisir un mois", sorted(data["Date"].dt.strftime('%Y-%m').unique(), reverse=True))
-    df_mois = data[data["Date"].dt.strftime('%Y-%m') == mois_selectionne]
+    df_mois = data[data["Date"].dt.strftime('%Y-%m') == mois_selectionne].copy()
     total_mois = round(df_mois["Durée (h)"].sum(), 2)
 
     # Formater les heures (Heure Début, Heure Fin) pour ne pas afficher les secondes
     df_mois["Heure Début"] = df_mois["Heure Début"].apply(lambda x: x.strftime("%H:%M") if pd.notnull(x) else "")
     df_mois["Heure Fin"] = df_mois["Heure Fin"].apply(lambda x: x.strftime("%H:%M") if pd.notnull(x) else "")
 
-    # ✅ Formater la date pour enlever l'heure
-    df_mois["Date"] = df_mois["Date"].dt.strftime("%Y-%m-%d")
+    # ✅ Formater la date pour l'affichage
+    df_mois["Date_str"] = df_mois["Date"].dt.strftime("%Y-%m-%d")
 
     st.subheader(f"🗓️ Mois : {mois_selectionne}")
     st.write(f"**Total d'heures de garde :** ⏱️ {total_mois} heures")
-    st.dataframe(df_mois)
+    st.dataframe(df_mois.drop(columns=["Date_str"]))
 
-# 🗑️ Suppression
+    # 🗑️ Suppression
     st.subheader("🗑️ Supprimer un créneau")
     if not df_mois.empty and "ID" in df_mois.columns:
-        ligne_a_supprimer = st.selectbox(
-            "Sélectionner un créneau à supprimer",
-            df_mois.apply(lambda row: f"{int(row['ID'])} | {row['Date'].strftime('%Y-%m-%d')}", axis=1)
-        )
+        options_suppr = df_mois.apply(lambda row: f"{int(row['ID'])} | {row['Date'].strftime('%Y-%m-%d')}", axis=1)
+        ligne_a_supprimer = st.selectbox("Sélectionner un créneau à supprimer", options_suppr)
 
         if st.button("Supprimer ce créneau"):
             id_selection = int(ligne_a_supprimer.split(" | ")[0])
@@ -116,7 +114,7 @@ if not data.empty:
 
     # 📤 Export PDF
     if st.button("📤 Exporter la synthèse en PDF"):
-        pdf_path = export_pdf(df_mois, mois_selectionne)
+        pdf_path = export_pdf(df_mois.drop(columns=["Date_str"]), mois_selectionne)
         st.success("✅ PDF généré avec succès")
         st.download_button(label="📄 Télécharger le PDF", data=open(pdf_path, "rb").read(),
                            file_name=f"synthese_{mois_selectionne}.pdf", mime="application/pdf")
