@@ -87,12 +87,12 @@ if not data.empty:
     df_mois = data[data["Date"].dt.strftime('%Y-%m') == mois_selectionne]
     total_mois = round(df_mois["Durée (h)"].sum(), 2)
 
+    # Formater les heures (Heure Début, Heure Fin) pour ne pas afficher les secondes
+    df_mois["Heure Début"] = df_mois["Heure Début"].apply(lambda x: x.strftime("%H:%M") if pd.notnull(x) else "")
+    df_mois["Heure Fin"] = df_mois["Heure Fin"].apply(lambda x: x.strftime("%H:%M") if pd.notnull(x) else "")
+
     st.subheader(f"🗓️ Mois : {mois_selectionne}")
     st.write(f"**Total d'heures de garde :** ⏱️ {total_mois} heures")
-
-    # Formater les durées sans les secondes
-    df_mois["Durée (h)"] = df_mois["Durée (h)"].apply(lambda x: f"{x:.2f}" if x is not None else "-")
-
     st.dataframe(df_mois)
 
     # 🗑️ Suppression
