@@ -11,20 +11,45 @@ def load_data():
             df["ID"] = range(1, len(df)+1)
         return df
     except FileNotFoundError:
-        return pd.DataFrame(columns=["ID", "Date", "Heure Début", "Heure Fin", "Pause (min)", "Durée (h)"])
+        return pd.DataFrame(columns=["ID", "Date", "Heure Début", "Heure Fin", "Pause (min)", "Durée (h)", "Dépose", "Récupération"])
 
 def save_data(df):
     df.reset_index(drop=True, inplace=True)
     df.to_csv(DATA_FILE, index=False)
 
 def calculate_hours(start, end, pause_min):
-    fmt = "%H:%M:%S"
-    debut = datetime.strptime(str(start), fmt)
-    fin = datetime.strptime(str(end), fmt)
-    duree = (fin - debut - timedelta(minutes=pause_min)).total_seconds() / 3600
-    return round(duree, 2)
+    """
+    Calcule la durée en heures entre deux objets datetime.time,
+    en déduisant la pause en minutes.
+    """
+    if isinstance(start, str):
+        start = datetime.strptime(start, "%H:%M:%S").time()
+    if isinstance(end, str):
+        end = datetime.strptime(end, "%H:%M:%S").time()
+
+    # Si 'start' et 'end' sont déjà des objets datetime.time, on n'effectue pas la conversion à nouveau
+    if isinstance(start, datetime.time):
+        dt_start = datetime.combine(datetime.today(), start)
+    else:
+        dt_start = datetime.strptime(str(start), "%H:%M:%S")
+
+    if isinstance(end, datetime.time):
+        dt_end = datetime.combine(datetime.today(), end)
+    else:
+        dt_end = datetime.strptime(str(end), "%H:%M:%S")
+
+    # Si l'heure de fin est avant l'heure de début (exemple : garde de nuit), on ajoute un jour à l'heure de fin
+    if dt_end < dt_start:
+        dt_end += timedelta(days=1)
+
+    duration = dt_end - dt_start - timedelta(minutes=pause_min)
+    hours = round(duration.total_seconds() / 3600, 2)
+    return max(hours, 0)
 
 def export_pdf(df, mois):
+    """
+    Exporte une synthèse des heures de garde sous forme de fichier PDF.
+    """
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", "B", 16)
@@ -44,3 +69,17 @@ def export_pdf(df, mois):
     path = f"synthese_{mois}.pdf"
     pdf.output(path)
     return path
+
+def ajouter_depose(data, id, date, heure_debut):
+    """
+    Ajoute l'heure de dépose à la donnée.
+    """
+    data.loc[data['ID'] == id, 'Dépose'] = f"{date} {heure_debut}"
+    save_data(data)
+
+def ajouter_recuperation(data, id, date, heure_fin):
+    """
+    Ajoute l'heure de récupération à la donnée.
+    """
+    data.loc[data['ID'] == id, 'Récupération'] = f"{date} {heure_fin}"
+    save_data(data)
