@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from utils import load_data, save_data, calculate_hours, export_pdf
 
 st.set_page_config(page_title="Suivi Garde Enfant", layout="centered")
-st.title("👶 Suivi des Heures de Garde")
+st.title("👶 Nounou Tracker - Suivi des Heures de Garde")
 
 # Chargement des données
 data = load_data()
@@ -20,8 +20,9 @@ with st.form("entry_form"):
 
     if submitted:
         total_heures = calculate_hours(heure_debut, heure_fin, pause_minutes)
-        new_row = pd.DataFrame([[date, heure_debut, heure_fin, pause_minutes, total_heures]],
-                               columns=["Date", "Heure Début", "Heure Fin", "Pause (min)", "Durée (h)"])
+        new_id = int(data["ID"].max()) + 1 if not data.empty else 1
+        new_row = pd.DataFrame([[new_id, date, heure_debut, heure_fin, pause_minutes, total_heures]],
+                               columns=["ID", "Date", "Heure Début", "Heure Fin", "Pause (min)", "Durée (h)"])
         data = pd.concat([data, new_row], ignore_index=True)
         save_data(data)
         st.success("✅ Journée ajoutée !")
@@ -31,26 +32,32 @@ st.header("📊 Synthèse des heures")
 if not data.empty:
     data["Date"] = pd.to_datetime(data["Date"])
     data = data.sort_values("Date")
+
     mois_selectionne = st.selectbox("📆 Choisir un mois", sorted(data["Date"].dt.strftime('%Y-%m').unique(), reverse=True))
     df_mois = data[data["Date"].dt.strftime('%Y-%m') == mois_selectionne]
     total_mois = round(df_mois["Durée (h)"].sum(), 2)
 
     st.subheader(f"🗓️ Mois : {mois_selectionne}")
     st.write(f"**Total d'heures de garde :** ⏱️ {total_mois} heures")
-
     st.dataframe(df_mois)
 
     # 🗑️ Suppression
-st.subheader("🗑️ Supprimer un créneau")
-ligne_a_supprimer = st.selectbox("Sélectionner un créneau à supprimer", df_mois["ID"].astype(str) + " | " + df_mois["Date"].astype(str))
+    st.subheader("🗑️ Supprimer un créneau")
+    if not df_mois.empty and "ID" in df_mois.columns:
+        ligne_a_supprimer = st.selectbox(
+            "Sélectionner un créneau à supprimer",
+            df_mois.apply(lambda row: f"{int(row['ID'])} | {row['Date']}", axis=1)
+        )
 
-if st.button("Supprimer ce créneau"):
-    id_selection = int(ligne_a_supprimer.split(" | ")[0])
-    data = data[data["ID"] != id_selection]
-    save_data(data)
-    st.success("✅ Créneau supprimé avec succès. Recharge l'app pour voir les changements.")
+        if st.button("Supprimer ce créneau"):
+            id_selection = int(ligne_a_supprimer.split(" | ")[0])
+            data = data[data["ID"] != id_selection]
+            save_data(data)
+            st.success("✅ Créneau supprimé avec succès. Recharge l'app pour voir les changements.")
+    else:
+        st.info("Aucun créneau à supprimer ce mois-ci.")
 
-    # Export PDF
+    # 📤 Export PDF
     if st.button("📤 Exporter la synthèse en PDF"):
         pdf_path = export_pdf(df_mois, mois_selectionne)
         st.success("✅ PDF généré avec succès")
