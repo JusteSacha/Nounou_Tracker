@@ -6,11 +6,15 @@ DATA_FILE = "garde_data.csv"
 
 def load_data():
     try:
-        return pd.read_csv(DATA_FILE)
+        df = pd.read_csv(DATA_FILE)
+        if "ID" not in df.columns:
+            df["ID"] = range(1, len(df)+1)
+        return df
     except FileNotFoundError:
-        return pd.DataFrame(columns=["Date", "Heure Début", "Heure Fin", "Pause (min)", "Durée (h)"])
+        return pd.DataFrame(columns=["ID", "Date", "Heure Début", "Heure Fin", "Pause (min)", "Durée (h)"])
 
 def save_data(df):
+    df.reset_index(drop=True, inplace=True)
     df.to_csv(DATA_FILE, index=False)
 
 def calculate_hours(start, end, pause_min):
