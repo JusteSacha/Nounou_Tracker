@@ -74,11 +74,18 @@ if not data.empty:
     st.subheader(f"🗓️ Mois : {mois_selectionne}")
     st.write(f"**Total d'heures de garde :** ⏱️ {total_mois} heures")
     
-    # Affichage formaté sans secondes
+# Affichage formaté sans secondes
 df_display = df_mois.copy()
 df_display["Date"] = pd.to_datetime(df_display["Date"]).dt.strftime("%Y-%m-%d")
-df_display["Heure Début"] = df_display["Heure Début"].apply(lambda x: str(x)[:5])
-df_display["Heure Fin"] = df_display["Heure Fin"].apply(lambda x: str(x)[:5] if pd.notnull(x) else "")
+
+def format_time(x):
+    try:
+        return pd.to_datetime(x).strftime("%H:%M")
+    except:
+        return ""
+
+df_display["Heure Début"] = df_display["Heure Début"].apply(format_time)
+df_display["Heure Fin"] = df_display["Heure Fin"].apply(format_time)
 
 st.dataframe(
     df_display.style.format({
