@@ -14,6 +14,11 @@ def load_data():
         return pd.DataFrame(columns=["ID", "Date", "Heure Début", "Heure Fin", "Pause (min)", "Durée (h)", "Dépose", "Récupération"])
 
 def save_data(df):
+    df = df.copy()
+    if "ID" not in df.columns or df["ID"].isnull().any():
+        df["ID"] = range(1, len(df) + 1)
+    else:
+        df["ID"] = df["ID"].astype(int)
     df.reset_index(drop=True, inplace=True)
     df.to_csv(DATA_FILE, index=False)
 
